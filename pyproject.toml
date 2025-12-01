@@ -1,0 +1,10 @@
+[project]
+name = "semantic-text-aligner"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "litellm>=1.80.7",
+    "loguru>=0.7.3",
+]
