@@ -36,7 +36,70 @@ How stitching works
 
 CLI usage
 ---------
-Quick one-off alignment from the shell:
+Align two newline-delimited files (with optional chunking):
+```
+python -m semantic_text_aligner.core left.txt right.txt --chunk-size 6 --overlap-size 3
+```
+
+Example
+
+`file1.txt`:
+```
+morning espresso at blue bottle
+pay electricity bill online
+email project update to sara
+weekly team sync meeting
+order groceries from citymarket
+30-min treadmill run
+cook veggie stir fry for dinner
+backup laptop to external drive
+review quarterly budget spreadsheet
+call mom about weekend plans
+read 20 pages of novel before bed
+update personal to-do list in notion
+```
+
+`file2.txt`:
+```
+morning espresso @ blue bottle
+pay electric bill online
+sync weekly team meeting
+order grocery delivery from city market
+warmup walk then 30 min treadmill
+prep veggies for stir-fry dinner
+stir fry tofu and veggies for dinner
+full system backup of laptop
+review quarterly budget spreadsheet
+call parents about weekend trip
+scroll news instead of reading book
+clean up and reorganize notion tasks
+```
+
+```sh
+python -m src.semantic_text_aligner.core file1.txt file2.txt
+```
+
+output
+```
+ 1. morning espresso at blue bottle      | morning espresso @ blue bottle
+ 2. pay electricity bill online          | pay electric bill online
+ 3. email project update to sara         |
+ 4. weekly team sync meeting             | sync weekly team meeting
+ 5. order groceries from citymarket      | order grocery delivery from city market
+ 6. 30-min treadmill run                 | warmup walk then 30 min treadmill
+ 7. cook veggie stir fry for dinner      | prep veggies for stir-fry dinner
+ 8.                                      | stir fry tofu and veggies for dinner
+ 9.                                      | full system backup of laptop
+10. backup laptop to external drive      |
+11. review quarterly budget spreadsheet  | review quarterly budget spreadsheet
+12. call mom about weekend plans         | call parents about weekend trip
+13.                                      | scroll news instead of reading book
+14.                                      | clean up and reorganize notion tasks
+15. read 20 pages of novel before bed    |
+16. update personal to-do list in notion |
+```
+
+Quick one-off alignment inline:
 ```
 python - <<'PY'
 from semantic_text_aligner.core import align_string_lists
