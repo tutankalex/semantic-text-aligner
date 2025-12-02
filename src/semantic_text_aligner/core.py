@@ -191,6 +191,35 @@ def _print_raw_lists(left: list[Optional[str]], right: list[Optional[str]]) -> N
     print("=== End Raw Inputs ===\n")
 
 
+def stitch_rows(
+    head: list[tuple[Optional[str], Optional[str]]],
+    tail: list[tuple[Optional[str], Optional[str]]],
+) -> list[tuple[Optional[str], Optional[str]]]:
+    """Stitch together a list of rows into a single list of rows."""
+    return head + tail
+
+
+def stitch_chunks(
+    chunks: list[list[tuple[Optional[str], Optional[str]]]],
+) -> list[tuple[Optional[str], Optional[str]]]:
+    """Stitch together a list of chunks into a single list of rows."""
+
+    if not chunks:
+        return []
+    if len(chunks) < 2:
+        return chunks[0]
+
+    stitched_rows: list[tuple[Optional[str], Optional[str]]] = chunks[0]
+    print("=== START ===")
+    _print_alignment(stitched_rows)
+    for chunk in chunks[1:]:
+        print("=== CHUNK ===")
+        _print_alignment(chunk)
+        stitched_chunk = stitch_rows(stitched_rows[-len(chunk) :], chunk)
+        stitched_rows.extend(stitched_chunk)
+    return stitched_rows
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="DTW aligner using litellm embeddings (ollama/nomic-embed-text)."
@@ -202,10 +231,16 @@ def main() -> None:
         help="Index into SUBCASES from tests/fixtures/case_mixed1.py (default: 0)",
     )
     parser.add_argument(
+        "--demo-stitch-cases",
+        type=lambda x: [int(i) for i in x.split(",") if i.strip()],
+        default=[],
+        help="List of indices into SUBCASES from tests/fixtures/case_mixed1.py to stitch together (default: None)",
+    )
+    parser.add_argument(
         "--gap-penalty",
         type=float,
-        default=0.8,
-        help="Cost for inserting a gap (default: 0.8)",
+        default=0.1,
+        help="Cost for inserting a gap (default: 0.1)",
     )
     parser.add_argument(
         "--model",
@@ -223,15 +258,29 @@ def main() -> None:
     if not (0 <= args.demo_case_index < len(SUBCASES)):
         raise SystemExit(f"--demo-case-index must be between 0 and {len(SUBCASES) - 1}")
 
-    case = SUBCASES[args.demo_case_index]
-    logger.info(f"Running demo case {args.demo_case_index}: {case.name}")
-    _print_raw_lists(case.input.left, case.input.right)
-    rows = align_sequences(
-        (case.input.left, case.input.right),
-        gap_penalty=args.gap_penalty,
-        model=args.model,
-    )
-    _print_alignment(rows)
+    if args.demo_stitch_cases:
+        cases_to_stitch = [SUBCASES[idx] for idx in args.demo_stitch_cases]
+        alignments = [
+            align_sequences(
+                (case.input.left, case.input.right),
+                gap_penalty=args.gap_penalty,
+                model=args.model,
+            )
+            for case in cases_to_stitch
+        ]
+        stitched_rows = stitch_chunks(alignments)
+        print("=== STITCHED ===")
+        _print_alignment(stitched_rows)
+    else:
+        case = SUBCASES[args.demo_case_index]
+        logger.info(f"Running demo case {args.demo_case_index}: {case.name}")
+        _print_raw_lists(case.input.left, case.input.right)
+        rows = align_sequences(
+            (case.input.left, case.input.right),
+            gap_penalty=args.gap_penalty,
+            model=args.model,
+        )
+        _print_alignment(rows)
 
 
 if __name__ == "__main__":
