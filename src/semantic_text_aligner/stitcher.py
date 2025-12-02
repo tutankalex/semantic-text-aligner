@@ -286,9 +286,9 @@ def main() -> None:
 
     try:
         try:
-            from .core import align_sequences
+            from .aligner import align_sequences
         except ImportError:
-            from semantic_text_aligner.core import align_sequences
+            from semantic_text_aligner.aligner import align_sequences
         from tests.fixtures.case_mixed1 import SUBCASES
     except Exception as exc:  # pragma: no cover - defensive
         raise SystemExit(f"Unable to import required modules: {exc}") from exc

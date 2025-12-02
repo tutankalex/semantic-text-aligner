@@ -19,9 +19,12 @@ Key concepts
 
 APIs
 ----
-- Alignment: `semantic_text_aligner.core.align_sequences(input_data, gap_penalty=0.1, model="ollama/nomic-embed-text") -> list[tuple[str | None, str | None]]`
-- Stitching two: `semantic_text_aligner.stitcher.stitch_two_chunks(prev_tail, new_chunk, overlap_size) -> list[tuple[str | None, str | None]]` (returns rows to append).
-- Stitching all: `semantic_text_aligner.stitcher.stitch_all_chunks(chunks, overlap_size) -> list[tuple[str | None, str | None]]`
+- One-shot or chunked alignment:  
+  `semantic_text_aligner.core.align_string_lists(input_data, chunk_size=None, overlap_size=None, gap_penalty=0.1, model="ollama/nomic-embed-text")`  
+  - `chunk_size=None` runs a single full alignment.  
+  - When chunked, `overlap_size=None` defaults to `min(4, chunk_size // 2)` and stitched output is returned.
+- Low-level alignment (no stitching): `semantic_text_aligner.aligner.align_sequences(...)`
+- Stitching helpers: `stitch_two_chunks` (returns rows to append) and `stitch_all_chunks`.
 
 How stitching works
 -------------------
@@ -33,9 +36,14 @@ How stitching works
 
 CLI usage
 ---------
-Run a demo alignment (single chunk):
+Quick one-off alignment from the shell:
 ```
-python -m semantic_text_aligner.core --demo-case-index 0
+python - <<'PY'
+from semantic_text_aligner.core import align_string_lists
+left = ["a", "b", "c"]
+right = ["a", "c", "d"]
+print(align_string_lists((left, right)))
+PY
 ```
 
 Stitch multiple pre-aligned chunks (uses fixtures from `tests/fixtures/case_mixed1.py`):
@@ -46,34 +54,17 @@ python -m semantic_text_aligner.stitcher --case-indices 0,1,2 --overlap-size 2
 Programmatic example
 --------------------
 ```python
-from semantic_text_aligner.core import align_sequences
-from semantic_text_aligner.stitcher import stitch_all_chunks
+from semantic_text_aligner.core import align_string_lists
 
 left = ["dog", "pizza", "house", "balloon"]
 right = ["cat", "mouse", "pizza pie", "home"]
 
-# Align in two overlapping chunks (mocked here as precomputed)
-chunk1 = [
-    ("dog", None),
-    (None, "cat"),
-    ("pizza", None),
-    (None, "mouse"),
-]
-chunk2 = [
-    (None, "mouse"),
-    ("pizza", "pizza pie"),
-    ("house", None),
-]
+# Full alignment in one shot
+full = align_string_lists((left, right))
 
-stitched = stitch_all_chunks([chunk1, chunk2], overlap_size=2)
-# stitched =>
-# [
-#   ("dog", None),
-#   (None, "cat"),
-#   (None, "mouse"),
-#   ("pizza", "pizza pie"),
-#   ("house", None),
-# ]
+# Or align in overlapping chunks for memory control
+chunked = align_string_lists((left, right), chunk_size=3, overlap_size=None)
+```
 ```
 
 Testing
