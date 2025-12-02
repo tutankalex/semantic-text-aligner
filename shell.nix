@@ -12,6 +12,7 @@ in pkgs.mkShell {
     pkgs.uv
   ] ++ [
     pkgs.nodejs
+    pkgs.readline
   ]
   ++ nix_shortcuts.buildInputs
   ;  # join lists with ++
